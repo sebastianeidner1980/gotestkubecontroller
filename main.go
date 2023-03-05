@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -11,6 +14,8 @@ import (
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/seidner/app-controller/pkg/config"
 )
 
 type Client struct {
@@ -19,9 +24,13 @@ type Client struct {
 
 var (
 	InfoLogger *log.Logger
+	LogServer  = logrus.New()
 )
 
 func init() {
+	LogServer.Out = os.Stdout
+	LogServer.SetFormatter(&logrus.TextFormatter{})
+	LogServer.Info("Init the application")
 	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatal(err)
@@ -31,6 +40,8 @@ func init() {
 }
 
 func main() {
+	var cfg = config.NewConfiguration()
+	fmt.Println(cfg.Namespace)
 	kubeconfig := os.Getenv("HOME") + "/.kube/yigit_kubeconfig"
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
