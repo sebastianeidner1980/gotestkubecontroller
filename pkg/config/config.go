@@ -14,6 +14,7 @@ type Configuration struct {
 	Namespace  string `json: "namespace,omitempty"`
 	Kubeconfig string `json: "kubeconfig,omitempty"`
 	Resource   string `json: "resource,omitempty"`
+	LogLevel   string `json: "loglevel,omitempty"`
 }
 
 func NewConfiguration() *Configuration {

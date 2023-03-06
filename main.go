@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -23,25 +21,27 @@ type Client struct {
 }
 
 var (
-	InfoLogger *log.Logger
-	LogServer  = logrus.New()
+	Logger = logrus.New()
+	cfg    = config.NewConfiguration()
 )
 
 func init() {
-	LogServer.Out = os.Stdout
-	LogServer.SetFormatter(&logrus.TextFormatter{})
-	LogServer.Info("Init the application")
-	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
+	Logger.Out = os.Stdout
 
-	InfoLogger = log.New(file, "INFO: ", log.Ldate|log.Ltime|log.Lshortfile)
+	loglevel, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		loglevel = logrus.InfoLevel
+	}
+	Logger.SetLevel(loglevel)
+	Logger.Formatter = &logrus.JSONFormatter{
+		PrettyPrint:     true,
+		TimestampFormat: "2006-01-02 15:04:05",
+	}
+	Logger.Debug("Logging successful launched")
 }
 
 func main() {
-	var cfg = config.NewConfiguration()
-	fmt.Println(cfg.Namespace)
+
 	kubeconfig := os.Getenv("HOME") + "/.kube/yigit_kubeconfig"
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
@@ -61,7 +61,7 @@ func main() {
 	)
 	var handler cache.ResourceEventHandlerFuncs
 	handler.AddFunc = func(obj interface{}) {
-		InfoLogger.Println("add event")
+		Logger.Debug("add event")
 	}
 	handler.UpdateFunc = func(old, new interface{}) {
 		oldObj := old.(*unstructured.Unstructured)
@@ -69,14 +69,14 @@ func main() {
 		oldReplica, _, _ := unstructured.NestedInt64(oldObj.Object, "spec", "replicas")
 		newReplica, _, _ := unstructured.NestedInt64(newObj.Object, "spec", "replicas")
 		if oldReplica != newReplica {
-			InfoLogger.Printf("Replicas is changed: %v\n", newReplica)
+			Logger.Debug("Replicas is changed: %v\n", newReplica)
 		}
 
 	}
 	handler.DeleteFunc = func(obj interface{}) {
 		u := obj.(*unstructured.Unstructured)
 
-		InfoLogger.Println(u.GetName())
+		Logger.Debug(u.GetName())
 	}
 
 	gvr, _ := schema.ParseResourceArg("deployments.v1.apps")

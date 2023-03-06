@@ -1,3 +1,4 @@
-namespace: "memcached"
+namespace: memcached
 kubeconfig: 
 resource: 
+loglevel: debug
