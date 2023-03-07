@@ -2,13 +2,12 @@ package config
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
-var (
-	ConfigFile string = "config.yaml"
-)
+const ConfigFile = "config.yaml"
 
 type Configuration struct {
 	Namespace  string `json: "namespace,omitempty"`
@@ -17,18 +16,21 @@ type Configuration struct {
 	LogLevel   string `json: "loglevel,omitempty"`
 }
 
-func NewConfiguration() *Configuration {
+func NewConfiguration(appName string) *Configuration {
 	var C Configuration
-	viper.SetConfigName("config")         // name of config file (without extension)
-	viper.SetConfigType("yaml")           // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath("/etc/appname/")  // path to look for the config file in
-	viper.AddConfigPath("$HOME/.appname") // call multiple times to add many search paths
-	viper.AddConfigPath(".")              // optionally look for config in the working directory
-	err := viper.ReadInConfig()           // Find and read the config file
-	if err != nil {                       // Handle errors reading the config file
+	cfgFile := strings.Split(ConfigFile, ".")
+	viper.SetConfigName(cfgFile[0])          // name of config file (without extension)
+	viper.SetConfigType(cfgFile[1])          // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath("$HOME/." + appName) // call multiple times to add many search paths
+	viper.AddConfigPath("./" + cfgFile[0])   // optionally look for config in the working directory
+	err := viper.ReadInConfig()              // Find and read the config file
+	if err != nil {                          // Handle errors reading the config file
 		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
 	err = viper.Unmarshal(&C)
+	if err != nil {
+		panic(fmt.Errorf("fatal error could completly parse config file: %w", err))
+	}
 
-	return &C
+	return &C, nil
 }

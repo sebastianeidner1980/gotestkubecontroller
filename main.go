@@ -20,9 +20,11 @@ type Client struct {
 	dynamicClient dynamic.Interface
 }
 
+const appName = "BoostrapController"
+
 var (
 	Logger = logrus.New()
-	cfg    = config.NewConfiguration()
+	cfg    = config.NewConfiguration(appName)
 )
 
 func init() {
@@ -41,12 +43,15 @@ func init() {
 }
 
 func main() {
+	Logger.Info(appName, " started")
 
 	kubeconfig := os.Getenv("HOME") + "/.kube/yigit_kubeconfig"
+
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		panic(err.Error())
 	}
+
 	clientset, err := dynamic.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
